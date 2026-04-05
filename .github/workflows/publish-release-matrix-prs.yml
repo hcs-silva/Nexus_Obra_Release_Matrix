@@ -1,0 +1,136 @@
+name: Publish Release Matrix PRs
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - "release-matrix.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-client-repo:
+    name: Sync Client Repo Matrix
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout canonical source repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+
+      - name: Validate required configuration
+        env:
+          CLIENT_REPO: ${{ vars.CLIENT_REPO }}
+          CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        run: |
+          if [ -z "$CLIENT_REPO" ]; then
+            echo "Missing repository variable CLIENT_REPO (example: your-org/nexus-obra-client)"
+            exit 1
+          fi
+
+          if [ -z "$CROSS_REPO_TOKEN" ]; then
+            echo "Missing secret CROSS_REPO_TOKEN"
+            exit 1
+          fi
+
+      - name: Render client release matrix markdown
+        run: node scripts/render-release-matrix.mjs --target client --source release-matrix.json --out RELEASE_MATRIX.client.md
+
+      - name: Checkout client repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.CLIENT_REPO }}
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          path: target-client
+          ref: main
+
+      - name: Update client RELEASE_MATRIX.md
+        run: cp RELEASE_MATRIX.client.md target-client/RELEASE_MATRIX.md
+
+      - name: Create client sync PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          path: target-client
+          commit-message: "chore: sync release matrix from canonical source"
+          branch: "chore/release-matrix-sync"
+          delete-branch: true
+          title: "chore: sync release matrix"
+          body: |
+            Automated update from canonical release matrix source.
+
+            Source commit: ${{ github.sha }}
+          base: main
+          labels: |
+            automation
+            release
+
+  sync-server-repo:
+    name: Sync Server Repo Matrix
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout canonical source repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+
+      - name: Validate required configuration
+        env:
+          SERVER_REPO: ${{ vars.SERVER_REPO }}
+          CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        run: |
+          if [ -z "$SERVER_REPO" ]; then
+            echo "Missing repository variable SERVER_REPO (example: your-org/nexus-obra-server)"
+            exit 1
+          fi
+
+          if [ -z "$CROSS_REPO_TOKEN" ]; then
+            echo "Missing secret CROSS_REPO_TOKEN"
+            exit 1
+          fi
+
+      - name: Render server release matrix markdown
+        run: node scripts/render-release-matrix.mjs --target server --source release-matrix.json --out RELEASE_MATRIX.server.md
+
+      - name: Checkout server repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.SERVER_REPO }}
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          path: target-server
+          ref: main
+
+      - name: Update server RELEASE_MATRIX.md
+        run: cp RELEASE_MATRIX.server.md target-server/RELEASE_MATRIX.md
+
+      - name: Create server sync PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          path: target-server
+          commit-message: "chore: sync release matrix from canonical source"
+          branch: "chore/release-matrix-sync"
+          delete-branch: true
+          title: "chore: sync release matrix"
+          body: |
+            Automated update from canonical release matrix source.
+
+            Source commit: ${{ github.sha }}
+          base: main
+          labels: |
+            automation
+            release

@@ -1,0 +1,101 @@
+name: Promote Canonical Release Matrix
+
+on:
+  repository_dispatch:
+    types: [client_release_published, server_release_published]
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Component to promote (client or server)
+        required: true
+        type: choice
+        options:
+          - client
+          - server
+      tag:
+        description: Release tag (client-vX.Y.Z or server-vX.Y.Z)
+        required: true
+        type: string
+      environment:
+        description: Environment row to update
+        required: false
+        default: dev
+        type: string
+      notes:
+        description: Optional notes for this promotion
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout canonical repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+
+      - name: Resolve payload
+        id: payload
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_COMPONENT: ${{ github.event.client_payload.component }}
+          DISPATCH_TAG: ${{ github.event.client_payload.tag }}
+          DISPATCH_ENV: ${{ github.event.client_payload.environment }}
+          DISPATCH_NOTES: ${{ github.event.client_payload.notes }}
+          INPUT_COMPONENT: ${{ github.event.inputs.component }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          INPUT_ENV: ${{ github.event.inputs.environment }}
+          INPUT_NOTES: ${{ github.event.inputs.notes }}
+        run: |
+          if [ "$EVENT_NAME" = "repository_dispatch" ]; then
+            COMPONENT="$DISPATCH_COMPONENT"
+            TAG="$DISPATCH_TAG"
+            ENVIRONMENT="${DISPATCH_ENV:-dev}"
+            NOTES="${DISPATCH_NOTES:-}"
+          else
+            COMPONENT="$INPUT_COMPONENT"
+            TAG="$INPUT_TAG"
+            ENVIRONMENT="${INPUT_ENV:-dev}"
+            NOTES="${INPUT_NOTES:-}"
+          fi
+
+          if [ -z "$COMPONENT" ] || [ -z "$TAG" ]; then
+            echo "Missing component or tag in event payload"
+            exit 1
+          fi
+
+          echo "component=$COMPONENT" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+          {
+            echo "notes<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update canonical matrix
+        run: |
+          node scripts/update-canonical-matrix.mjs \
+            --component "${{ steps.payload.outputs.component }}" \
+            --tag "${{ steps.payload.outputs.tag }}" \
+            --environment "${{ steps.payload.outputs.environment }}" \
+            --approved-by "github-actions[bot]" \
+            --notes "${{ steps.payload.outputs.notes }}"
+
+      - name: Commit canonical matrix update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release-matrix.json
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: promote ${{ steps.payload.outputs.component }} release ${{ steps.payload.outputs.tag }}"
+          git push

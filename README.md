@@ -56,6 +56,28 @@ If one target uses `master`, update these fields in `.github/workflows/publish-r
 5. It writes `RELEASE_MATRIX.md` in each repo.
 6. It creates or updates PRs named `chore: sync release matrix`.
 
+## Automatic Promotion from Client/Server Releases
+
+This repository also supports automatic canonical updates when a new release is created in either consumer repo.
+
+- Workflow: `.github/workflows/promote-release-matrix.yml`
+- Trigger types:
+  - `repository_dispatch` (from Client/Server release workflows)
+  - `workflow_dispatch` (manual fallback)
+
+Expected dispatch payload:
+
+```json
+{
+	"component": "client" | "server",
+	"tag": "client-vX.Y.Z" | "server-vX.Y.Z",
+	"environment": "dev",
+	"notes": "optional"
+}
+```
+
+When this workflow commits `release-matrix.json`, the existing `publish-release-matrix-prs.yml` workflow opens/updates sync PRs in Client and Server.
+
 ## Manual Run
 
 You can trigger the workflow manually from GitHub Actions using `workflow_dispatch`.
@@ -80,5 +102,10 @@ node scripts/render-release-matrix.mjs --target server --source release-matrix.j
 
 Each target repo should keep its own sync-check workflow that validates `RELEASE_MATRIX.md` against canonical JSON.
 This publisher workflow creates PRs, while consumer workflows enforce merge gates.
+
+For automatic promotion, set these in both Client and Server repos:
+
+- Repository variable: `RELEASE_MATRIX_REPO` (example: `your-org/release-matrix-repo`)
+- Repository secret: `RELEASE_MATRIX_WRITE_TOKEN` (fine-grained token with `repository_dispatch` permission on canonical repo)
 
 # Nexus_Obra_Release_Matrix

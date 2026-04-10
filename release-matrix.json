@@ -3,10 +3,10 @@
     {
       "environment": "dev",
       "clientTag": "client-v1.14.0",
-      "serverTag": "server-v1.12.0",
-      "approvedBy": "",
-      "date": "2026-04-05",
-      "notes": ""
+      "serverTag": "server-v1.15.0",
+      "approvedBy": "github-actions[bot]",
+      "date": "2026-04-10",
+      "notes": "Auto-promoted from server release workflow"
     },
     {
       "environment": "staging",

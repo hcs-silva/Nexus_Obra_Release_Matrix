@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout canonical source repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22.12.0
 
@@ -45,7 +45,7 @@ jobs:
         run: node scripts/render-release-matrix.mjs --target client --source release-matrix.json --out RELEASE_MATRIX.client.md
 
       - name: Checkout client repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ vars.CLIENT_REPO }}
           token: ${{ secrets.CROSS_REPO_TOKEN }}
@@ -81,10 +81,10 @@ jobs:
 
     steps:
       - name: Checkout canonical source repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22.12.0
 
@@ -107,7 +107,7 @@ jobs:
         run: node scripts/render-release-matrix.mjs --target server --source release-matrix.json --out RELEASE_MATRIX.server.md
 
       - name: Checkout server repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ vars.SERVER_REPO }}
           token: ${{ secrets.CROSS_REPO_TOKEN }}

@@ -3,9 +3,9 @@
     {
       "environment": "dev",
       "clientTag": "client-v1.16.0",
-      "serverTag": "server-v1.16.0",
+      "serverTag": "server-v1.17.0",
       "approvedBy": "github-actions[bot]",
-      "date": "2026-04-15",
+      "date": "2026-04-17",
       "notes": "Auto-promoted from server release workflow"
     },
     {

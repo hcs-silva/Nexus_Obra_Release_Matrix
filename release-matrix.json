@@ -2,10 +2,10 @@
   "approvedPairs": [
     {
       "environment": "dev",
-      "clientTag": "client-v1.19.0",
+      "clientTag": "client-v1.19.1",
       "serverTag": "server-v1.19.0",
       "approvedBy": "github-actions[bot]",
-      "date": "2026-05-05",
+      "date": "2026-05-10",
       "notes": "Auto-promoted from client release workflow"
     },
     {

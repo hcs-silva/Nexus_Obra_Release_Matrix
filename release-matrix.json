@@ -2,7 +2,7 @@
   "approvedPairs": [
     {
       "environment": "dev",
-      "clientTag": "client-v1.21.0",
+      "clientTag": "client-v1.21.1",
       "serverTag": "server-v1.22.0",
       "approvedBy": "github-actions[bot]",
       "date": "2026-05-22",

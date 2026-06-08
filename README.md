@@ -103,6 +103,12 @@ node scripts/render-release-matrix.mjs --target server --source release-matrix.j
 Each target repo should keep its own sync-check workflow that validates `RELEASE_MATRIX.md` against canonical JSON.
 This publisher workflow creates PRs, while consumer workflows enforce merge gates.
 
+Current recommended trigger model for consumer repos:
+
+- Run the strict matrix sync-check only after merge of the automation PR branch `chore/release-matrix-sync`.
+- Keep `workflow_dispatch` enabled for manual verification when needed.
+- Avoid running this strict check on every push to `main`/`master`, because canonical updates and cross-repo PR sync are asynchronous and can produce transient first-push failures.
+
 For automatic promotion, set these in both Client and Server repos:
 
 - Repository variable: `RELEASE_MATRIX_REPO` (example: `your-org/release-matrix-repo`)
